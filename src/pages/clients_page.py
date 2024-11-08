@@ -7,7 +7,7 @@ from src.utils.logger import Logger
 from bs4 import BeautifulSoup
 import pandas as pd
 
-class Clients(BasePage):
+class ClientPage(BasePage):
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -18,6 +18,8 @@ class Clients(BasePage):
         self.url = 'https://appp.gclick.com.br/relatorios/clientes'
         self.insert_filters = (By.XPATH, '//button//span[contains(text(), "Inserir Filtros")]')
         self.input_search = (By.XPATH, '//input[@placeholder="Pesquisar"]')
+        self.input_particulars = (By.XPATH, '//app-input-autocomplete[@endpoint="particularidades"]//input')
+        self.option_das_mei = (By.XPATH, '//mat-option//span//span//b[contains(text(), "DAS")]/following-sibling::b')
         self.checkbox_groups = (By.XPATH, '//label[contains(text(), "Grupos")]')
         self.select_groups = (By.XPATH, '//app-input-autocomplete[@endpoint="grupos"]//input')
         self.option_mei = (By.XPATH, '//mat-option//span//span//b[contains(text(), "MEI")]')
@@ -28,7 +30,6 @@ class Clients(BasePage):
         self.select_itens = (By.XPATH, '//div[contains(text(), "Itens por página")]/following-sibling::mat-form-field')
         self.option_1000 = (By.XPATH, '//mat-option//span[contains(text(), "1000")]')
         self.next_page = (By.XPATH, '//button[@aria-label="Próxima página"]')
-        self.loading = (By.XPATH, '//img[@alt="Carregando"]')
         self.body = (By.TAG_NAME, 'body')
         self.table = (By.TAG_NAME, 'table')
 
@@ -39,7 +40,7 @@ class Clients(BasePage):
             self.wait_loading_disappear()
             self.wait_presence_element(10, self.table)
 
-            self.wait_presence_element(20, self.insert_filters).click()
+            """self.wait_presence_element(20, self.insert_filters).click()
             self.wait_presence_element(10, self.input_search).send_keys('Grupos')
             self.wait_presence_element(20, self.checkbox_groups).click()
 
@@ -48,14 +49,16 @@ class Clients(BasePage):
 
             self.wait_presence_element(20, self.select_groups).click()
             self.wait_presence_element(10, self.select_groups).send_keys('MEI')
-            self.wait_presence_element(20, self.option_mei).click()
+            self.wait_presence_element(20, self.option_mei).click()"""
+
+            self.wait_presence_element(10, self.input_particulars).send_keys('DAS MEI')
+            self.wait_presence_element(20, self.option_das_mei).click()
 
             # Clicar fora
             self.find_element(self.body).click()
 
             self.wait_presence_element(20, self.select_status).click()
             self.wait_presence_element(20, self.option_active).click()
-
 
             self.wait_presence_element(20, self.apply_filters).click()
 
@@ -94,7 +97,10 @@ class Clients(BasePage):
 
             self.extract_clients_from_table()
 
-            return self.dataframe_clients
+            # Transformar o dataframe em dicionário
+            dict_clients = self.dataframe_clients.set_index("cnpj")["name"].to_dict()
+
+            return dict_clients
 
         except NoSuchElementException as e:
             self.logger.error(f"Clientes - Erro ao localizar um elemento: {str(e)}")
@@ -107,12 +113,6 @@ class Clients(BasePage):
         except Exception as e:
             self.logger.error(f"Clientes - Erro inesperado: {str(e)}")
             raise
-
-    def wait_loading_disappear(self):
-        try:
-            self.wait_invisibility_of_element(60, self.loading)
-        except Exception as e:
-            pass
 
     def extract_clients_from_table(self):
         try:

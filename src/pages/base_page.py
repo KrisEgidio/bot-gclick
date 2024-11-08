@@ -1,6 +1,7 @@
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
 
 class SeleniumObject:
     def find_element(self, locator):
@@ -40,6 +41,11 @@ class SeleniumObject:
         except:
             return default_text
 
+    def wait_loading_disappear(self):
+        try:
+            self.wait_invisibility_of_element(60, (By.XPATH, '//img[@alt="Carregando"]'))
+        except Exception as e:
+            pass
 
 class BasePage(SeleniumObject):
     def __init__(self, webdriver):
